@@ -1,6 +1,6 @@
 # netfingerprinter
 
-> Actively fingerprint network services by performing minimal protocol handshakes and extracting structured identity information — software name, version, supported algorithms, and server configuration.
+> Actively fingerprint network services by performing minimal protocol handshakes and extracting structured identity information - software name, version, supported algorithms, and server configuration.
 
 Think of it as what Wireshark does **passively** in a capture, but done **actively and programmatically** against a target host, with clean structured output you can pipe into other tools.
 
@@ -81,7 +81,7 @@ netfingerprinter scan 192.168.1.1 --port 22
 # HTTP server
 netfingerprinter scan example.com --port 80
 
-# HTTPS — performs TLS handshake first
+# HTTPS - performs TLS handshake first
 netfingerprinter scan example.com --port 443 --protocol https
 
 # Force a specific prober even on a non-standard port
@@ -91,13 +91,13 @@ netfingerprinter scan 10.0.0.5 --port 2222 --protocol ssh
 ### Output formats
 
 ```shell
-# Human-readable (default) — uses Rich for colour, degrades gracefully when piped
+# Human-readable (default) - uses Rich for colour, degrades gracefully when piped
 netfingerprinter scan host --port 22
 
-# JSON — pretty-printed, suitable for scripting
+# JSON - pretty-printed, suitable for scripting
 netfingerprinter scan host --port 22 --format json
 
-# JSON Lines — one object per line, ideal for streaming pipelines
+# JSON Lines - one object per line, ideal for streaming pipelines
 netfingerprinter scan host --port 22 --format jsonl | jq '.ssh_kex_algorithms[]'
 ```
 
@@ -133,16 +133,16 @@ The project is split into four layers, each with a single responsibility:
 src/netfingerprinter/
 ├── core/
 │   ├── connection.py   # Raw TCP socket + optional TLS upgrade (stdlib ssl)
-│   ├── registry.py     # @register decorator — maps ports/names → prober classes
+│   ├── registry.py     # @register decorator - maps ports/names → prober classes
 │   ├── result.py       # FingerprintResult dataclass + Confidence enum
 │   └── scanner.py      # Orchestrates prober selection and error handling
-├── parsers/            # Pure functions — no I/O, fully unit-testable
+├── parsers/            # Pure functions - no I/O, fully unit-testable
 │   ├── ssh_banner.py   # Regex parser for RFC 4253 §4.2 version strings
 │   ├── ssh_kex.py      # Binary parser for SSH_MSG_KEXINIT (struct.unpack)
 │   └── http_response.py
 ├── probers/            # Protocol-specific handshake logic
 │   ├── base.py         # BaseProber ABC
-│   ├── ssh.py          # SSHProber — banner + KEX_INIT exchange
+│   ├── ssh.py          # SSHProber - banner + KEX_INIT exchange
 │   └── http.py         # HTTPProber / HTTPSProber
 └── output/
     └── formatter.py    # Rich human output + JSON/JSONL rendering
@@ -175,35 +175,12 @@ class MyProtoProber(BaseProber):
 
 ---
 
-## Development
-
-```shell
-uv sync                          # install all dependencies
-uv run pytest                    # full test suite with coverage
-uv run pytest -m unit            # fast parser tests only (no I/O)
-uv run pytest -m integration     # prober tests with FakeConnection
-uv run pytest -m e2e             # CLI tests via Click's CliRunner
-```
-
-### Test design (TDD)
-
-Tests are written **before** the implementation they cover, in three zones:
-
-| Zone | Marker | What it tests | Network needed |
-|------|--------|---------------|---------------|
-| Unit | `unit` | Pure parser functions, parametrized against real-world banner strings | No |
-| Integration | `integration` | Full prober logic using `FakeConnection` replaying captured byte sequences | No |
-| E2E | `e2e` | CLI commands via `CliRunner` with `Scanner.run` mocked | No |
-
-
----
-
 ## Technical notes
 
-- **SSH KEX_INIT parsing** is implemented with `struct.unpack` directly against RFC 4253 §7.1 — no `paramiko` or `cryptography` dependency. The tool only needs to read the public handshake, not establish a full session.
-- **TLS** uses the Python stdlib `ssl` module — sufficient to extract protocol version, cipher suite, and certificate chain without pulling in `pyopenssl`.
+- **SSH KEX_INIT parsing** is implemented with `struct.unpack` directly against RFC 4253 §7.1 - no `paramiko` or `cryptography` dependency. The tool only needs to read the public handshake, not establish a full session.
+- **TLS** uses the Python stdlib `ssl` module - sufficient to extract protocol version, cipher suite, and certificate chain without pulling in `pyopenssl`.
 - **Zero mandatory external runtime dependencies** beyond `click` (CLI) and `rich` (output). All protocol parsing uses the standard library.
-- **Extensible by design** — new protocols self-register via a decorator; the scanner needs no modification.
+- **Extensible by design** - new protocols self-register via a decorator; the scanner needs no modification.
 
 ---
 
@@ -214,4 +191,3 @@ Tests are written **before** the implementation they cover, in three zones:
 | `click` | CLI framework |
 | `rich` | Coloured terminal output, degrades gracefully when piped |
 
-Dev: `pytest`, `pytest-cov`, `pytest-mock`
